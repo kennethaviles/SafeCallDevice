@@ -87,7 +87,9 @@ int main(void){
 //    	__no_operation();
 //    }
 }
-
+//------------------------------------------------------------------------------
+// Methods
+//------------------------------------------------------------------------------
 void configurePorts(){
 
 	P1DIR |= BIT0 + BIT6;	//P1.0 and P1.6 as output
@@ -150,7 +152,9 @@ void sendUART(unsigned char *value, unsigned int len){
 	}
 
 }
-
+//------------------------------------------------------------------------------
+// Interrupts
+//------------------------------------------------------------------------------
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void ReceiveInterrupt(void){
 
