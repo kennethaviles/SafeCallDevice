@@ -32,11 +32,14 @@ int countPress = 0; // User to count the number of press
 char data[] = {'$'};
 unsigned char letter = 'E';
 unsigned char *string;
+int i=0;
+
+char receivedData[20];
 
 //------------------------------------------------------------------------------
 // Declarations
 //------------------------------------------------------------------------------
-
+void initUART();
 void configureUART(unsigned int br0, unsigned int brs);
 void configurePorts();
 void sendUART(unsigned char *str, unsigned int len);
@@ -46,8 +49,8 @@ void setupBT();
 //------------------------------------------------------------------------------
 // main()
 //------------------------------------------------------------------------------
-int main(void)
-{
+int main(void){
+
     WDTCTL = WDTPW + WDTHOLD;               // Stop watchdog timer
 
     //----------------------------- Configure the clock-------------------------
@@ -62,25 +65,16 @@ int main(void)
 
     configurePorts();
 
-    configureUART(8, 0x0C);				//For a baudrate 115200
-    string  = "$$$";
+    initUART();
+//    sendUART("HOLA",6);
+//
+//    sendUART("KENNETH", 9);
+//
+//    sendUART("H",2);
 
-    //Enter to the command mode
-    sendUART(string,5);
 
-    //Change the baudrate in the Bluetooth to 9600
-    sendUART("U,9600,N",10);
-
-    sendUART("HOLA",6);
-
-    sendUART("KENNETH", 9);
-
-    sendUART("H",2);
-
-    //Change the baudrate in the MCU to 9600
-    configureUART(104, 0x02);			//For a baudrate 9600
-
-//    sendString("Changed to 9600");
+    sendUART("Changed to 9600", 18);
+    sendUART("E\n", 4);
 
 
     //UCA0TXBUF = 'A';                  // Transmit a byte
@@ -94,8 +88,8 @@ int main(void)
 //    }
 }
 
-void configurePorts()
-{
+void configurePorts(){
+
 	P1DIR |= BIT0 + BIT6;	//P1.0 and P1.6 as output
 	P1OUT &= ~BIT0 + BIT6;	//P1.0 and P1.6 = 0
 
@@ -113,8 +107,20 @@ void configurePorts()
 	P1SEL2 |= BIT1 + BIT2;
 }
 
-void configureUART(unsigned int br0, unsigned int brs)
-{
+void initUART(){
+	//For a baudrate 115200
+    configureUART(8, 0x0C);
+    //string  = "SSS";
+    string  = "$$$";
+
+    //Change to the command mode
+    sendUART(string,5);
+
+    //Change the baudrate in the Bluetooth to 9600
+    sendUART("U,9600,N\n",11);
+
+}
+void configureUART(unsigned int br0, unsigned int brs){
 	//Configure the UART(USCI_A0)
 	UCA0CTL1 |= UCSSEL_2 + UCSWRST;	// Set USCI clock to SMCLK and put state machine in reset
 
@@ -133,6 +139,7 @@ void configureUART(unsigned int br0, unsigned int brs)
 }
 
 void sendUART(unsigned char *value, unsigned int len){
+
 	while(len--){
 		while(!(IFG2 & UCA0TXIFG));
 		UCA0TXBUF = *value;
@@ -146,8 +153,10 @@ void sendUART(unsigned char *value, unsigned int len){
 
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void ReceiveInterrupt(void){
+
 	P1OUT ^= BIT6;	// Toggle P1.6 led on Rx
-	cmd = UCA0RXBUF;
+	receivedData[i] = UCA0RXBUF;
+	i++;
 	//printf("cmd: %d\n", cmd);
 
 //	switch(UCA0RXBUF){
@@ -156,6 +165,9 @@ __interrupt void ReceiveInterrupt(void){
 //		case F:
 //			fallDet = FALSE;
 //	}
+	if(i == 15){
+		i = 0;
+	}
 	IFG2 &= ~UCA0RXIFG;	// Clear RX Flag
 	P1OUT ^= BIT6;	// Toggle P1.6 led on Rx
 
@@ -170,11 +182,11 @@ __interrupt void ReceiveInterrupt(void){
 //}
 
 #pragma vector = PORT1_VECTOR
-__interrupt void Port_1(void)
-{
+__interrupt void Port_1(void){
+
   P1IFG &= ~BIT3; //clear P1IFG for P1.3
   P1OUT ^= BIT0;  //toggle LED at P1.0
-  sendUART("F", 1);
+  sendUART("E", 2);
 
 }
 
