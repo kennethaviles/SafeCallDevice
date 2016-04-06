@@ -66,26 +66,9 @@ int main(void){
     configurePorts();
 
     initUART();
-//    sendUART("HOLA",6);
-//
-//    sendUART("KENNETH", 9);
-//
-//    sendUART("H",2);
-
-
-    sendUART("Changed to 9600", 18);
-    sendUART("E\n", 4);
-
-
-    //UCA0TXBUF = 'A';                  // Transmit a byte
-
-    //__enable_interrupt();
-    //_BIS_SR(GIE);
 
     _BIS_SR(LPM0_bits + GIE);         // Going to LPM0
-//    while(1){
-//    	__no_operation();
-//    }
+
 }
 //------------------------------------------------------------------------------
 // Methods
