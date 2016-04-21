@@ -27,7 +27,7 @@ unsigned int fallDet; // Fall detected - True = 1, False = 0
 //	Variables
 //------------------------------------------------------------------------------
 
-char cmd;		//Used for the UART
+//char cmd;		//Used for the UART
 int countPress = 0; // User to count the number of press
 char data[] = {'$'};
 unsigned char letter = 'E';
@@ -69,6 +69,7 @@ int main(void){
 
     _BIS_SR(LPM0_bits + GIE);         // Going to LPM0
 
+
 }
 //------------------------------------------------------------------------------
 // Methods
@@ -104,6 +105,10 @@ void initUART(){
     //Change the baudrate in the Bluetooth to 9600
     sendUART("U,9600,N\n",11);
 
+    //For a baudrate 9600
+	configureUART(104, 0x02);
+
+//    sendUART("GK\n",6);
 }
 void configureUART(unsigned int br0, unsigned int brs){
 	//Configure the UART(USCI_A0)
@@ -171,9 +176,9 @@ __interrupt void ReceiveInterrupt(void){
 #pragma vector = PORT1_VECTOR
 __interrupt void Port_1(void){
 
-  P1IFG &= ~BIT3; //clear P1IFG for P1.3
-  P1OUT ^= BIT0;  //toggle LED at P1.0
-  sendUART("E", 2);
+	P1OUT ^= BIT0;  //toggle LED at P1.0
+	sendUART("E", 2);
+	P1IFG &= ~BIT3; //clear P1IFG for P1.3
 
 }
 
