@@ -1,6 +1,6 @@
 #include <msp430.h>
 #include <stdio.h>
-
+#include <time.h>
 //------------------------------------------------------------------------------
 //	Ports
 //------------------------------------------------------------------------------
@@ -14,8 +14,10 @@
 //------------------------------------------------------------------------------
 #define FALSE 0
 #define TRUE  1
-#define T 0x34
-#define F 0x26
+#define T 0x54
+#define F 0x46
+#define E 0x45
+#define D 0x44
 
 //------------------------------------------------------------------------------
 //	Flags
@@ -44,6 +46,8 @@ void configureUART(unsigned int br0, unsigned int brs);
 void configurePorts();
 void sendUART(unsigned char *str, unsigned int len);
 void setupBT();
+void delay(int milliseconds);
+
 
 
 //------------------------------------------------------------------------------
@@ -82,11 +86,11 @@ void configurePorts(){
 //	P1DIR |= BIT1 + BIT2;	//P1.1 and P1.2 as output
 //	P1OUT &= ~BIT1 + ~BIT2;	//P1.1 and P1.2 = 0
 
-	P1DIR &= ~BIT3; //P1.3 i/p
-	P1REN |=  BIT3; //P1.3 enable pullup resistor
-	P1IES |=  BIT3; //P1.3 high to low transition
-	P1IFG &= ~BIT3; //P1.3 clear interrupt flag
-	P1IE  |=  BIT3; //enable P1.3 interrupt
+	P1DIR &= ~BIT3 + ~BIT4; //P1.3 i/p
+	P1REN |=  BIT3 + BIT4; //P1.3 enable pullup resistor
+	P1IES |=  BIT3 + BIT4; //P1.3 high to low transition
+	P1IFG &= ~BIT3 + ~BIT4; //P1.3 clear interrupt flag
+	P1IE  |=  BIT3 + BIT4; //enable P1.3 interrupt
 
 	//Set the UART function for P1.1 and P1.2
 	P1SEL |= BIT1 + BIT2;
@@ -96,17 +100,17 @@ void configurePorts(){
 void initUART(){
 	//For a baudrate 115200
     configureUART(8, 0x0C);
-    //string  = "SSS";
-    string  = "$$$";
+
+//    string  = "$$$";
 
     //Change to the command mode
-    sendUART(string,5);
+//    sendUART(string,5);
 
     //Change the baudrate in the Bluetooth to 9600
-    sendUART("U,9600,N\n",11);
+//    sendUART("U,9600,N\n",11);
 
     //For a baudrate 9600
-	configureUART(104, 0x02);
+//	configureUART(104, 0x02);
 
 //    sendUART("GK\n",6);
 }
@@ -140,28 +144,45 @@ void sendUART(unsigned char *value, unsigned int len){
 	}
 
 }
+
+void delay(int milliseconds)
+{
+    long pause;
+    clock_t now,then;
+
+    pause = milliseconds*(CLOCKS_PER_SEC/1000);
+    now = then = clock();
+    while( (now-then) < pause )
+        now = clock();
+}
+
 //------------------------------------------------------------------------------
 // Interrupts
 //------------------------------------------------------------------------------
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void ReceiveInterrupt(void){
 
-	P1OUT ^= BIT6;	// Toggle P1.6 led on Rx
-	receivedData[i] = UCA0RXBUF;
-	i++;
+//	P1OUT ^= BIT6;	// Toggle P1.6 led on Rx
+//	receivedData[i] = UCA0RXBUF;
+//	i++;
 	//printf("cmd: %d\n", cmd);
 
-//	switch(UCA0RXBUF){
-//		case T:
-//			fallDet = TRUE;
-//		case F:
-//			fallDet = FALSE;
-//	}
-	if(i == 15){
-		i = 0;
+	switch(UCA0RXBUF){
+		case E:{
+			fallDet = TRUE;
+			P1OUT |= BIT6;	// Toggle P1.6 led on Rx
+		}
+		break;
+		case D:{
+			fallDet = FALSE;
+			P1OUT &= ~BIT6;	// Toggle P1.6 led on Rx
+		}
+		break;
 	}
+//	if(i == 15){
+//		i = 0;
+//	}
 	IFG2 &= ~UCA0RXIFG;	// Clear RX Flag
-	P1OUT ^= BIT6;	// Toggle P1.6 led on Rx
 
 }
 
@@ -177,8 +198,15 @@ __interrupt void ReceiveInterrupt(void){
 __interrupt void Port_1(void){
 
 	P1OUT ^= BIT0;  //toggle LED at P1.0
-	sendUART("E", 2);
-	P1IFG &= ~BIT3; //clear P1IFG for P1.3
+	  if(P1IFG & BIT3){
+		  sendUART("E", 2);
+		  P1IFG &= ~BIT3; //clear P1IFG for P1.3
+	  }
+	  else if(P1IFG & BIT4){
+		  sendUART("F", 2);
+		  P1IFG &= ~BIT4; //clear P1IFG for P1.3
+
+	  }
 
 }
 
